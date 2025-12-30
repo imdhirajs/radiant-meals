@@ -45,14 +45,24 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
     if (!user) return;
 
     try {
+      console.log("Checking subscription for user:", user.id);
       const { data, error } = await supabase.functions.invoke("razorpay", {
-        body: { action: "check-subscription", userId: user.id },
+        body: { action: "check-subscription" },
       });
 
-      if (error) throw error;
-      setIsSubscribed(data.isSubscribed);
-    } catch (error) {
+      console.log("Subscription check response:", data, error);
+
+      if (error) {
+        // Try to get more details from the error
+        const errorData = await error.context?.json?.() || {};
+        console.error("Function error details:", errorData);
+        throw error;
+      }
+      setIsSubscribed(data?.isSubscribed ?? false);
+    } catch (error: any) {
       console.error("Error checking subscription:", error);
+      // For now, allow access if there's an error (graceful degradation)
+      // In production, you might want to block access instead
       setIsSubscribed(false);
     } finally {
       setIsLoading(false);
