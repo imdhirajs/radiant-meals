@@ -104,11 +104,92 @@ const mealTypeColors: Record<string, string> = {
   dinner: "bg-blue-100 text-blue-700",
 };
 
-const mealTypeIcons: Record<string, string> = {
-  breakfast: "🍳",
-  lunch: "🥗",
-  snack: "🍎",
-  dinner: "🍽️",
+// Smart emoji generator based on meal name and ingredients
+const getMealEmoji = (mealName: string, mealType: string): string => {
+  const name = mealName.toLowerCase();
+  
+  // Indian dishes
+  if (name.includes("poha")) return "🍚";
+  if (name.includes("upma")) return "🌾";
+  if (name.includes("idli") || name.includes("dosa")) return "🫓";
+  if (name.includes("paratha") || name.includes("roti") || name.includes("chapati")) return "🫓";
+  if (name.includes("dal") || name.includes("tadka")) return "🫘";
+  if (name.includes("biryani") || name.includes("pulao")) return "🍛";
+  if (name.includes("curry")) return "🍛";
+  if (name.includes("saag") || name.includes("palak") || name.includes("spinach")) return "🥬";
+  if (name.includes("paneer")) return "🧀";
+  if (name.includes("samosa") || name.includes("pakora")) return "🥟";
+  if (name.includes("chana") || name.includes("chickpea")) return "🫘";
+  if (name.includes("moong") || name.includes("sprout")) return "🌱";
+  if (name.includes("sabzi") || name.includes("bhaji") || name.includes("vegetable")) return "🥗";
+  if (name.includes("raita")) return "🥛";
+  if (name.includes("lassi")) return "🥛";
+  if (name.includes("khichdi")) return "🍚";
+  
+  // Proteins
+  if (name.includes("chicken")) return "🍗";
+  if (name.includes("fish") || name.includes("salmon") || name.includes("tuna")) return "🐟";
+  if (name.includes("egg") || name.includes("omelette") || name.includes("bhurji")) return "🥚";
+  if (name.includes("mutton") || name.includes("lamb")) return "🍖";
+  if (name.includes("prawn") || name.includes("shrimp")) return "🦐";
+  if (name.includes("beef") || name.includes("steak")) return "🥩";
+  if (name.includes("pork")) return "🥓";
+  
+  // Grains & Rice
+  if (name.includes("rice") || name.includes("chawal")) return "🍚";
+  if (name.includes("oats") || name.includes("oatmeal")) return "🥣";
+  if (name.includes("bread") || name.includes("toast")) return "🍞";
+  if (name.includes("pasta") || name.includes("noodle")) return "🍝";
+  if (name.includes("quinoa")) return "🌾";
+  
+  // Salads & Fresh
+  if (name.includes("salad")) return "🥗";
+  if (name.includes("cucumber") || name.includes("kheera")) return "🥒";
+  if (name.includes("tomato")) return "🍅";
+  if (name.includes("carrot") || name.includes("gajar")) return "🥕";
+  if (name.includes("beetroot") || name.includes("beet")) return "🍠";
+  if (name.includes("cauliflower") || name.includes("gobi")) return "🥦";
+  if (name.includes("broccoli")) return "🥦";
+  if (name.includes("bhindi") || name.includes("okra")) return "🥒";
+  
+  // Fruits & Smoothies
+  if (name.includes("smoothie") || name.includes("shake")) return "🥤";
+  if (name.includes("apple")) return "🍎";
+  if (name.includes("banana")) return "🍌";
+  if (name.includes("mango") || name.includes("aam")) return "🥭";
+  if (name.includes("orange")) return "🍊";
+  if (name.includes("fruit")) return "🍇";
+  
+  // Nuts & Dry Fruits
+  if (name.includes("peanut") || name.includes("mungfali")) return "🥜";
+  if (name.includes("almond") || name.includes("badam")) return "🌰";
+  if (name.includes("walnut") || name.includes("akhrot")) return "🌰";
+  if (name.includes("nuts") || name.includes("dry fruit")) return "🥜";
+  
+  // Dairy
+  if (name.includes("yogurt") || name.includes("curd") || name.includes("dahi")) return "🥛";
+  if (name.includes("milk") || name.includes("doodh")) return "🥛";
+  if (name.includes("cheese")) return "🧀";
+  
+  // Soups & Drinks
+  if (name.includes("soup")) return "🍲";
+  if (name.includes("tea") || name.includes("chai")) return "☕";
+  if (name.includes("coffee")) return "☕";
+  if (name.includes("juice")) return "🧃";
+  
+  // Sweets & Snacks
+  if (name.includes("halwa")) return "🍮";
+  if (name.includes("kheer")) return "🍮";
+  if (name.includes("ladoo") || name.includes("barfi")) return "🍬";
+  
+  // Fallback by meal type
+  switch (mealType) {
+    case "breakfast": return "🌅";
+    case "lunch": return "🍱";
+    case "snack": return "🍪";
+    case "dinner": return "🌙";
+    default: return "🍽️";
+  }
 };
 
 export function MealPlanResult({ data, userPreferences }: MealPlanResultProps) {
@@ -247,7 +328,7 @@ export function MealPlanResult({ data, userPreferences }: MealPlanResultProps) {
                   <div className="flex gap-4">
                     {/* Meal Icon */}
                     <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-mint-100 to-mint-200 flex items-center justify-center flex-shrink-0">
-                      <span className="text-3xl">{mealTypeIcons[type] || "🍽️"}</span>
+                      <span className="text-3xl">{getMealEmoji(meal.name, type)}</span>
                     </div>
 
                     <div className="flex-1 min-w-0">
