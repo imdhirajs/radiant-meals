@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Razorpay function invoked");
+    
     // Create admin client for database operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -21,7 +23,10 @@ serve(async (req) => {
 
     // Verify the user's JWT token
     const jwtHeader = req.headers.get("Authorization");
+    console.log("JWT Header present:", !!jwtHeader);
+    
     if (!jwtHeader) {
+      console.log("Missing authorization header");
       return new Response(JSON.stringify({ error: "Missing authorization header" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -31,8 +36,11 @@ serve(async (req) => {
     const token = jwtHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
+    console.log("Auth result - user:", !!user, "error:", authError?.message);
+    
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+      console.log("Auth error:", authError?.message || "No user found");
+      return new Response(JSON.stringify({ error: "Invalid token", details: authError?.message }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
