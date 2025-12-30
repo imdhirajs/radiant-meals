@@ -55,16 +55,25 @@ const Index = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: MealPlanResponse = await response.json();
+      const data = await response.json();
+      console.log("N8N Response:", data);
       
-      if (data.success) {
-        setMealPlanResult(data);
+      if (data.success && data.data) {
+        setMealPlanResult(data as MealPlanResponse);
         toast({
           title: "Meal Plan Generated! 🎉",
           description: `Your personalized ${formData.country} meal plan is ready.`,
         });
+      } else if (data.error) {
+        // Handle n8n error response with details
+        console.error("N8N error:", data.error, data.details);
+        toast({
+          title: "Generation Issue",
+          description: data.details || data.error || "The AI response was incomplete. Please try again.",
+          variant: "destructive",
+        });
       } else {
-        throw new Error("Failed to generate meal plan");
+        throw new Error("Unexpected response format");
       }
     } catch (error) {
       console.error("Error generating meal plan:", error);
