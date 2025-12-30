@@ -5,9 +5,8 @@ import { Header } from "@/components/Header";
 import { MealPlanForm } from "@/components/MealPlanForm";
 import { MealPlanResult, MealPlanData } from "@/components/MealPlanResult";
 import { NutritionStats } from "@/components/NutritionStats";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
 
 // N8N Workflow webhook URL
 const N8N_WEBHOOK_URL = "https://n8n.srv1057145.hstgr.cloud/webhook/meal-plan-generator";
@@ -42,6 +41,7 @@ const Dashboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [mealPlanResult, setMealPlanResult] = useState<MealPlanResponse | null>(null);
   const { toast } = useToast();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -56,6 +56,13 @@ const Dashboard = () => {
       description: "See you next time!",
     });
     navigate("/");
+  };
+
+  const handleUpgrade = () => {
+    toast({
+      title: "Already Subscribed",
+      description: "You're already enjoying Meal Plan Pro!",
+    });
   };
 
   const handleGeneratePlan = async (formData: MealPlanFormData) => {
@@ -120,54 +127,50 @@ const Dashboard = () => {
   const userName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Chef";
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <Header userName={userName} />
-            <Button
-              variant="ghost"
-              onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-          
-          {!mealPlanResult ? (
-            <>
-              <MealPlanForm onGenerate={handleGeneratePlan} isLoading={isGenerating} />
-              <NutritionStats />
-            </>
-          ) : (
-            <>
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="font-heading text-2xl font-bold text-foreground">
-                    Your Personalized Meal Plan
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Generated on {new Date(mealPlanResult.generatedAt).toLocaleDateString()}
-                  </p>
+    <SubscriptionGate>
+      <div className="min-h-screen bg-background">
+        <main className="p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            <Header 
+              userName={userName} 
+              onUpgrade={handleUpgrade}
+              onSignOut={handleSignOut}
+            />
+            
+            {!mealPlanResult ? (
+              <>
+                <MealPlanForm onGenerate={handleGeneratePlan} isLoading={isGenerating} />
+                <NutritionStats />
+              </>
+            ) : (
+              <>
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-heading text-2xl font-bold text-foreground">
+                      Your Personalized Meal Plan
+                    </h2>
+                    <p className="text-muted-foreground">
+                      Generated on {new Date(mealPlanResult.generatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setMealPlanResult(null)}
+                    className="px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    ← Generate New Plan
+                  </button>
                 </div>
-                <button
-                  onClick={() => setMealPlanResult(null)}
-                  className="px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                >
-                  ← Generate New Plan
-                </button>
-              </div>
-              
-              <MealPlanResult 
-                data={mealPlanResult.data}
-                userPreferences={mealPlanResult.userPreferences}
-              />
-            </>
-          )}
-        </div>
-      </main>
-    </div>
+                
+                <MealPlanResult 
+                  data={mealPlanResult.data}
+                  userPreferences={mealPlanResult.userPreferences}
+                />
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+    </SubscriptionGate>
   );
 };
 
