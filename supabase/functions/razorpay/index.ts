@@ -13,10 +13,30 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    // Create admin client for database operations
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Verify the user's JWT token
+    const jwtHeader = req.headers.get("Authorization");
+    if (!jwtHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const token = jwtHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID");
     const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
@@ -25,16 +45,20 @@ serve(async (req) => {
       throw new Error("Razorpay credentials not configured");
     }
 
-    const { action, userId, subscriptionId, paymentId, signature } = await req.json();
+    const { action, subscriptionId, paymentId, signature } = await req.json();
+    
+    // Use the verified user's ID instead of trusting client-provided userId
+    const userId = user.id;
 
-    const authHeader = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
+    // Razorpay Basic Auth header
+    const razorpayAuth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
 
     if (action === "create-plan") {
       // Create a plan for ₹1/month
       const planResponse = await fetch("https://api.razorpay.com/v1/plans", {
         method: "POST",
         headers: {
-          "Authorization": `Basic ${authHeader}`,
+          "Authorization": `Basic ${razorpayAuth}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -65,7 +89,7 @@ serve(async (req) => {
       const plansResponse = await fetch("https://api.razorpay.com/v1/plans", {
         method: "GET",
         headers: {
-          "Authorization": `Basic ${authHeader}`,
+          "Authorization": `Basic ${razorpayAuth}`,
         },
       });
 
@@ -84,7 +108,7 @@ serve(async (req) => {
         const createPlanResponse = await fetch("https://api.razorpay.com/v1/plans", {
           method: "POST",
           headers: {
-            "Authorization": `Basic ${authHeader}`,
+            "Authorization": `Basic ${razorpayAuth}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -110,7 +134,7 @@ serve(async (req) => {
       const subResponse = await fetch("https://api.razorpay.com/v1/subscriptions", {
         method: "POST",
         headers: {
-          "Authorization": `Basic ${authHeader}`,
+          "Authorization": `Basic ${razorpayAuth}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -130,7 +154,7 @@ serve(async (req) => {
       }
 
       // Create or update subscription record in database
-      const { error: dbError } = await supabaseClient
+      const { error: dbError } = await supabaseAdmin
         .from("subscriptions")
         .upsert({
           user_id: userId,
@@ -178,7 +202,7 @@ serve(async (req) => {
       }
 
       // Update subscription status to active
-      const { error: dbError } = await supabaseClient
+      const { error: dbError } = await supabaseAdmin
         .from("subscriptions")
         .update({
           status: "active",
@@ -197,7 +221,7 @@ serve(async (req) => {
     }
 
     if (action === "check-subscription") {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabaseAdmin
         .from("subscriptions")
         .select("*")
         .eq("user_id", userId)
