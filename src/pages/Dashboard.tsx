@@ -1,11 +1,8 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { MealPlanForm } from "@/components/MealPlanForm";
 import { MealPlanResult, MealPlanData } from "@/components/MealPlanResult";
 import { NutritionStats } from "@/components/NutritionStats";
-import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { useToast } from "@/hooks/use-toast";
 
 // N8N Workflow webhook URL
@@ -36,34 +33,9 @@ interface MealPlanResponse {
 }
 
 const Dashboard = () => {
-  const { user, loading, signOut } = useAuth();
-  const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
   const [mealPlanResult, setMealPlanResult] = useState<MealPlanResponse | null>(null);
   const { toast } = useToast();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
-  }, [user, loading, navigate]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    toast({
-      title: "Signed out",
-      description: "See you next time!",
-    });
-    navigate("/");
-  };
-
-  const handleUpgrade = () => {
-    toast({
-      title: "Already Subscribed",
-      description: "You're already enjoying Meal Plan Pro!",
-    });
-  };
 
   const handleGeneratePlan = async (formData: MealPlanFormData) => {
     setIsGenerating(true);
@@ -112,65 +84,45 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const userName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Chef";
-
   return (
-    <SubscriptionGate>
-      <div className="min-h-screen bg-background">
-        <main className="p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
-            <Header 
-              userName={userName} 
-              onUpgrade={handleUpgrade}
-              onSignOut={handleSignOut}
-            />
-            
-            {!mealPlanResult ? (
-              <>
-                <MealPlanForm onGenerate={handleGeneratePlan} isLoading={isGenerating} />
-                <NutritionStats />
-              </>
-            ) : (
-              <>
-                <div className="mb-6 flex items-center justify-between">
-                  <div>
-                    <h2 className="font-heading text-2xl font-bold text-foreground">
-                      Your Personalized Meal Plan
-                    </h2>
-                    <p className="text-muted-foreground">
-                      Generated on {new Date(mealPlanResult.generatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setMealPlanResult(null)}
-                    className="px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                  >
-                    ← Generate New Plan
-                  </button>
+    <div className="min-h-screen bg-background">
+      <main className="p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          <Header userName="Chef" />
+          
+          {!mealPlanResult ? (
+            <>
+              <MealPlanForm onGenerate={handleGeneratePlan} isLoading={isGenerating} />
+              <NutritionStats />
+            </>
+          ) : (
+            <>
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h2 className="font-heading text-2xl font-bold text-foreground">
+                    Your Personalized Meal Plan
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Generated on {new Date(mealPlanResult.generatedAt).toLocaleDateString()}
+                  </p>
                 </div>
-                
-                <MealPlanResult 
-                  data={mealPlanResult.data}
-                  userPreferences={mealPlanResult.userPreferences}
-                />
-              </>
-            )}
-          </div>
-        </main>
-      </div>
-    </SubscriptionGate>
+                <button
+                  onClick={() => setMealPlanResult(null)}
+                  className="px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  ← Generate New Plan
+                </button>
+              </div>
+              
+              <MealPlanResult 
+                data={mealPlanResult.data}
+                userPreferences={mealPlanResult.userPreferences}
+              />
+            </>
+          )}
+        </div>
+      </main>
+    </div>
   );
 };
 
