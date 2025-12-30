@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { MealPlanForm } from "@/components/MealPlanForm";
 import { MealPlanResult, MealPlanData } from "@/components/MealPlanResult";
@@ -89,9 +88,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar activeItem={activeNavItem} onItemClick={setActiveNavItem} />
-      
-      <main className="ml-20 p-6 lg:p-8">
+      <main className="p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <Header userName="Chef" />
           
